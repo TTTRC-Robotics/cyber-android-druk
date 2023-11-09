@@ -15,8 +15,10 @@
 
 #include <serial_megapi/serial_megapi.h>
 
+int turn_count = 0;
 int flag_turning = 0;
 float start_turning_angle = 0.0;
+float last_yaw = 0.0;
 int gyro_received_once = 0;
 
 void drive_forward(const int fd, const int motor_left, const int motor_right, const int wheel_speed){
@@ -50,16 +52,26 @@ void move_my_robot(const int fd, float distance, float yaw, const int motor_left
 }
 
 void turn_my_robot(const int fd, float yaw, const int motor_left, const int motor_right, const int wheel_speed, const float angle_degree){
+  if(abs(yaw - last_yaw) > 200){
+    if( yaw - last_yaw > 0){
+      turn_count -= 1; 
+    } else {
+      turn_count += 1;
+    }
+  }
+
+  float real_yaw = yaw + turn_count * 360;
+  
   if(!flag_turning && gyro_received_once){
-    start_turning_angle = yaw;
+    start_turning_angle = real_yaw;
     flag_turning = 1;
   }
 
-  double delta_angle = yaw - start_turning_angle;
+  double delta_angle = real_yaw - start_turning_angle;
   double epsilon = delta_angle - angle_degree;
   const double tolerance_degree = 2.5;
 
-  printf (" Delta_angle : %f / aim_angle : %f / Epsilon : %f ", delta_angle, angle_degree, epsilon) ;
+  printf (" Delta_angle : %f / aim_angle : %f / Epsilon : %f / real_yaw : %f ", delta_angle, angle_degree, epsilon, real_yaw) ;
 
   if(abs(epsilon) > tolerance_degree ){
     // then we want to turn
@@ -74,7 +86,7 @@ void turn_my_robot(const int fd, float yaw, const int motor_left, const int moto
     // flag_turning = 0;
   }
   
-  
+  last_yaw = yaw;
 }
 
 int main ()
