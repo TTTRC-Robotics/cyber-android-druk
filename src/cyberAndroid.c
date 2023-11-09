@@ -55,13 +55,15 @@ void turn_my_robot(const int fd, float yaw, const int motor_left, const int moto
     flag_turning = 1;
   }
 
-  double epsilon = abs(yaw - start_turning_angle);
+  double delta_angle = yaw - start_turning_angle;
+  double epsilon = delta_angle - angle_degree;
+  const double tolerance_degree = 2.5;
 
-  printf (" Epsilon : %f / aim_angle : %f", epsilon, angle_degree) ;
+  printf (" Delta_angle : %f / aim_angle : %f / Epsilon : %f ", delta_angle, angle_degree, epsilon) ;
 
-  if(epsilon < abs(angle_degree)){
+  if(abs(epsilon) > tolerance_degree ){
     // then we want to turn
-    if(angle_degree > 0){
+    if(epsilon < 0){
       turn_left(fd, motor_left, motor_right, wheel_speed);
     } else {
       turn_right(fd, motor_left, motor_right, wheel_speed);
